@@ -1,0 +1,38 @@
+name: Build SRS for HomeProxy
+
+on:
+  push:
+    paths:
+      - 'warmane.txt'  # 只有 warmane.txt 变更时触发
+  workflow_dispatch:   # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4  # 拉取代码
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Install SRS CLI
+        run: go install github.com/MetaCubeX/srs@latest
+
+      - name: Build SRS file
+        run: |
+          mkdir -p dist
+          ~/go/bin/srs build warmane.txt -o dist/warmane.srs
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: warmane-srs
+          path: dist/warmane.srs
+
+      - name: Upload to Release (Optional)
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/warmane.srs
